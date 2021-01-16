@@ -6,10 +6,12 @@ import React, { useRef, useEffect } from "react";
 import * as tf from '@tensorflow/tfjs';
 import Webcam from 'react-webcam';
 import './App.css';
-
+//hand recognition from webcam
 import {Camera} from '@mediapipe/camera_utils/camera_utils';
 import {Hands} from '@mediapipe/hands/hands';
-
+//tfjs model
+//import * as handpose from "@tensorflow-models/handpose";
+//display
 import {displayHand, displayEmpty} from './displayUtils';
 
 function App() {
@@ -34,6 +36,7 @@ function App() {
 
     //results are non-empty
     if (results.multiHandLandmarks && results.multiHandedness) {
+      //console.log(results);
       for (let i = 0; i < results.multiHandLandmarks.length; i++){
         displayHand(
           results.image, 
@@ -70,6 +73,29 @@ function App() {
 
       canvasRef.current.width = vw;
       canvasRef.current.height = vh;
+
+      /*
+      const hand = await net.estimateHands(video);
+      console.log(hand);
+
+      if (hand.length > 0) {
+        const GE = new fp.GestureEstimator([
+          fp.Gestures.VictoryGesture,
+          fp.Gestures.ThumbsUpGesture,
+        ]);
+        const gesture = await GE.estimate(hand[0].landmarks, 4);
+        if (gesture.gestures !== undefined && gesture.gestures.length > 0) {
+          console.log(gesture.gestures);
+
+          const confidence = gesture.gestures.map(
+            (prediction) => prediction.confidence
+          );
+          const maxConfidence = confidence.indexOf(
+            Math.max.apply(null, confidence)
+          );
+          console.log(gesture, gesture.gestures[maxConfidence].name);
+        }
+      }*/
       
       if (cam === null){
         console.log('setting up mediapipe camera for the first time');
@@ -90,7 +116,7 @@ function App() {
   var cam = null;
 
   const setupWidgets = async () => {
-
+    //const net = await handpose.load();
     console.log('setting up widgets');
 
     //initialize mediapipe ML model
@@ -99,22 +125,24 @@ function App() {
     }});
     hands.setOptions({
       maxNumHands:1,
-      minDetectionConfidence:0.6,
-      minTrackingConfidence:0.6
+      minDetectionConfidence:0.8,
+      minTrackingConfidence:0.8
     });
     hands.onResults(onResults);
 
     //initialize custom hand recognizer
     window.recognizer = await tf.loadLayersModel(
-      'https://aelu419.github.io/TensorFlowPlayground/asl_best_so_far/model.json'
+      'https://aelu419.github.io/TensorFlowPlayground/asl_cnn/model.json'
     );
     window.recognizer.add(tf.layers.softmax());
     console.log(window.recognizer);
 
     //automatically send webcam picture to hands
-    setInterval(() => {
+    const refresh = () => {
+      //console.log('refresh called');
       sendPicture(hands);
-    }, 100);
+    }
+    setInterval(refresh, 1000);
   }
 
   useEffect(()=>{setupWidgets()},[]);
